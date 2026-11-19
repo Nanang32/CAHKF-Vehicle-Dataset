@@ -1,0 +1,5 @@
+python==3.13
+numpy==2.5.3
+pandas==3.0.5
+matplotlib
+openpyxl   # only needed to rebuild data/gaps_empirical.csv from the raw log

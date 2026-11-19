@@ -1,0 +1,21 @@
+{
+  "camera": {"focal_length_px": 800.0, "target_width_m": 1.8, "sigma_f_px": 2.0, "sigma_W_m_controlled": 0.05, "sigma_W_m_naturalistic": 0.15},
+  "detection_noise_sigma_w_px": {"table1_and_range_sweep": 2.5, "field_informed_simulation": [2.5, 1.7, 0.96]},
+  "measurement": {"width_noise": "independent Gaussian, zero mean, per frame, in pixels (focal length and target width are NOT perturbed)",
+                  "distance_from_width": "D_k = f*W/w_k (nominal f and W)",
+                  "R_k": "sigma_D,k^2 = (D_k)^2 * [(sigma_f/f)^2 + (sigma_W/W)^2 + (sigma_w/w_k)^2], with D_k the MEASURED distance and w_k the noisy width (units m^2)"},
+  "kalman": {"state": "[D, v, a]",
+             "F(dt)": "[[1, dt, dt^2/2],[0, 1, dt],[0, 0, 1]]",
+             "Q(dt)": "q * [[dt^4/4, dt^3/2, dt^2/2],[dt^3/2, dt^2, dt],[dt^2/2, dt, 1]]  (Gamma*Gamma^T with Gamma=[dt^2/2, dt, 1]^T: white acceleration INCREMENT with variance q per step; q has units (m/s^2)^2)",
+             "H": "[1, 0, 0]",
+             "x0": "[z_0, 0, 0]", "P0": "diag(10*R_0, 100, 100)",
+             "q_grid": {"table1_fig9_and_range_sweep": "np.logspace(-3, 3, 20)  (effective_range_analysis.tune_q)",
+                        "field_informed_simulation": "np.logspace(-3, 3, 25)  (kalman_vs_sg_comparison.tune_process_noise-style grid)"},
+             "q_selection": "minimum one-step-ahead innovation RMSE of the forward filter",
+             "smoother": "Rauch-Tung-Striebel backward pass, pinv() in the gain; estimate read at the sample nearest t_mark"},
+  "savitzky_golay": {"type": "generalized (non-uniform) local polynomial, order 2, fitted to the k samples nearest in TIME to the evaluation time (no special endpoint rule: near the ends the window is one-sided)",
+                     "window_candidates_k": [5, 7, 9, 11], "selection": "leave-one-out cross-validation on D (RMSE of the held-out sample)", "acceleration": "2 * quadratic coefficient"},
+  "trials": {"table1": {"D0_m": 30, "v0_mps": -1.5, "fps": 15, "duration_s": 4.0, "t_mark_s": 1.1, "n_per_condition": 8, "D2_values": [2.0, 0.0, -2.0], "seeds": "1100/2200/3300 + 17*trial"},
+             "range_sweep": {"D0_grid_m": [8,10,12,15,18,20,25,30,40,50,60,80,100], "v0_mps": -0.5, "D2": -1.5, "n_per_distance": 12, "duration_s": "adaptive (safe_trial_duration, 1.8-4.0 s)", "seeds": "97*trial + int(10*D0)"},
+             "field_informed": {"D0_m": 45, "v0_mps": -1.5, "duration_s": 5.0, "n_per_condition": 40, "sampling": "uniform 15 FPS or gaps drawn with replacement from data/gaps_empirical.csv restricted to 0 < gap <= 2 s", "seeds": "1000 + int(100*sigma_w) + int(10*D2)"}}
+}

@@ -1,0 +1,20 @@
+"""Fig. 8 and Fig. 10 of the manuscript from the n=200 sweep (results/range_sweep_largeN_*.csv)."""
+import os, numpy as np, pandas as pd
+import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
+HERE=os.path.dirname(os.path.abspath(__file__)); os.chdir(os.path.join(HERE,'results')); os.makedirs('figs',exist_ok=True)
+T=pd.read_csv('range_sweep_largeN_trials.csv').dropna(subset=['kf_estimate']); S=pd.read_csv('range_sweep_largeN_summary.csv')
+g=T.groupby('D0').kf_estimate.agg(['mean','std']).reset_index()
+fig,ax=plt.subplots(figsize=(6.4,3.7),dpi=200)
+ax.axhline(-1.5,color='green',ls='--',lw=1,label='true D̈ = −1.5 m/s²'); ax.axvline(16.1,color='red',ls=':',lw=1.2,label='analytical D_cross = 16.1 m')
+ax.errorbar(g.D0,g['mean'],yerr=g['std'],fmt='o-',capsize=3,ms=4,lw=1.3,label='Kalman, mean ± SD (n=200)')
+ax.set_xlabel('Initial distance D0 (m)'); ax.set_ylabel('Estimated acceleration (m/s²)'); ax.set_ylim(-6,4.5); ax.grid(alpha=.3); ax.legend(fontsize=7,loc='upper left')
+fig.tight_layout(); fig.savefig('figs/fig8_largeN.png')
+fig,(a,b)=plt.subplots(1,2,figsize=(7.4,3.2),dpi=200,gridspec_kw={'width_ratios':[1,1.6]})
+a.bar(['Controlled\n(σW=0.05 m)','Naturalistic\n(σW=0.15 m)'],[16.1,48.0],color=['#1f77b4','#d62728'])
+for i,v in enumerate([16.1,48.0]): a.text(i,v+0.8,f'{v} m',ha='center',fontsize=8)
+a.set_ylim(0,56); a.set_ylabel('D_cross (m)'); a.set_title('(a) Analytical crossover',fontsize=9); a.tick_params(labelsize=7)
+b.fill_between(S.D0,S.ci_lo,S.ci_hi,alpha=.25,color='#1f77b4',label='95% bootstrap CI'); b.plot(S.D0,S.rel_rmse_pct,'o-',ms=3.5,color='#1f77b4')
+b.axhline(25,color='orange',ls='--',lw=1,label='25%'); b.axvline(16.1,color='red',ls=':',lw=1,label='D_cross = 16.1 m')
+b.set_ylim(0,300); b.set_xlabel('Initial distance D0 (m)'); b.set_ylabel('Relative RMSE (%)'); b.set_title('(b) Kalman simulation (n=200/distance)',fontsize=9); b.grid(alpha=.3); b.legend(fontsize=6.5,loc='upper left'); b.tick_params(labelsize=7)
+fig.tight_layout(); fig.savefig('figs/fig10_largeN.png')
+print(g.round(3).to_string())
